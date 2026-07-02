@@ -5,6 +5,10 @@ async function request(path, options = {}) {
   const token = localStorage.getItem('api_token');
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(path, { ...options, headers });
+  if (res.status === 401) {
+    // сервер требует API_TOKEN — показать экран входа
+    window.dispatchEvent(new Event('api-unauthorized'));
+  }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => null);
   if (!res.ok) {

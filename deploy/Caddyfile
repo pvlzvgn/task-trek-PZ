@@ -1,0 +1,15 @@
+{$SITE_ADDRESS:localhost}
+
+encode gzip
+
+# API → Node-контейнер
+handle /api/* {
+	reverse_proxy api:3001
+}
+
+# SPA: всё остальное — статика, роуты отдают index.html
+handle {
+	root * /srv
+	try_files {path} /index.html
+	file_server
+}

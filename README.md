@@ -48,9 +48,23 @@ npm run dev
 
 Авторизация: задай `API_TOKEN` в `server/.env` — тогда все запросы требуют `Authorization: Bearer <токен>` (v2-задел под MCP/агентов).
 
+## Деплой на VPS (Docker)
+
+```bash
+rsync -az --exclude node_modules --exclude .git --exclude server/data . root@СЕРВЕР:/opt/tasktrek/
+ssh root@СЕРВЕР
+cd /opt/tasktrek
+echo "SITE_ADDRESS=tasktrek.IP-ЧЕРЕЗ-ДЕФИСЫ.sslip.io" > .env   # или свой домен
+cp .env.example server/.env   # заполнить API_TOKEN и GOOGLE_*
+docker compose up -d --build
+```
+
+Три контейнера-состояния: `api` (Fastify), `web` (Caddy: автоматический HTTPS, статика клиента, прокси `/api`). База — в Docker-томе `tracker-data`. На iPhone: открыть сайт в Safari → «Поделиться» → «На экран “Домой”» — приложение станет PWA с иконкой.
+
 ## Структура
 
 ```
 server/   Fastify + better-sqlite3 (вся бизнес-логика, включая сборку «Сегодня»)
-client/   React + Vite SPA, мобильная вёрстка
+client/   React + Vite SPA, мобильная вёрстка, PWA
+deploy/   Caddyfile для продакшена
 ```
