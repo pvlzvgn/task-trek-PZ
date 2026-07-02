@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api, CONTEXT_LABELS } from '../api.js';
 import { requestNotifyPermission } from '../notifications.js';
+import { pushSupported, currentSubscription, enablePush, disablePush } from '../push.js';
 
 const WEEKDAY_LABELS = { 1: 'пн', 2: 'вт', 3: 'ср', 4: 'чт', 5: 'пт', 6: 'сб', 7: 'вс' };
 
@@ -11,6 +12,9 @@ export default function Settings({ refreshKey, bumpRefresh }) {
   const [notifyState, setNotifyState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
   );
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushTime, setPushTime] = useState('08:00');
 
   // Форма новой ротации
   const [showRotationForm, setShowRotationForm] = useState(false);
@@ -18,10 +22,17 @@ export default function Settings({ refreshKey, bumpRefresh }) {
   const [newRules, setNewRules] = useState({ 1: 'office', 2: 'office', 3: 'office', 4: 'remote', 5: 'remote', 6: 'weekend', 7: 'weekend' });
 
   const load = useCallback(async () => {
-    const [dts, rots, status] = await Promise.all([api.dayTypes(), api.rotations(), api.gcalStatus()]);
+    const [dts, rots, status, settings] = await Promise.all([
+      api.dayTypes(),
+      api.rotations(),
+      api.gcalStatus(),
+      api.settings(),
+    ]);
     setDayTypes(dts);
     setRotations(rots);
     setGcal(status);
+    if (settings.push_morning_time) setPushTime(settings.push_morning_time);
+    if (pushSupported()) setPushOn(!!(await currentSubscription()));
   }, []);
 
   useEffect(() => { load(); }, [load, refreshKey]);
@@ -59,6 +70,37 @@ export default function Settings({ refreshKey, bumpRefresh }) {
 
   async function enableNotifications() {
     setNotifyState(await requestNotifyPermission());
+  }
+
+  async function togglePush() {
+    setPushBusy(true);
+    try {
+      if (pushOn) {
+        await disablePush();
+        setPushOn(false);
+      } else {
+        await enablePush();
+        setPushOn(true);
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function testPush() {
+    try {
+      const res = await api.pushTest();
+      if (!res.sent) alert('Подписок нет — сначала включи пуши.');
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function savePushTime(value) {
+    setPushTime(value);
+    await api.updateSettings({ push_morning_time: value });
   }
 
   const currentRotation = rotations[0];
@@ -156,7 +198,43 @@ export default function Settings({ refreshKey, bumpRefresh }) {
         </p>
       </div>
 
-      <h2>Уведомления</h2>
+      <h2>Push-уведомления</h2>
+      <div className="card">
+        {!pushSupported() && (
+          <p className="muted">
+            Пуши недоступны в этом браузере. На iPhone: добавь приложение на экран «Домой» и открой его оттуда (iOS 16.4+).
+          </p>
+        )}
+        {pushSupported() && (
+          <>
+            <div className="settings-row">
+              <span>{pushOn ? 'Включены на этом устройстве ✅' : 'Выключены на этом устройстве'}</span>
+              <button className="btn small" onClick={togglePush} disabled={pushBusy}>
+                {pushOn ? 'Выключить' : 'Включить'}
+              </button>
+            </div>
+            <div className="settings-row">
+              <span>Утренний план в</span>
+              <input
+                type="time"
+                value={pushTime}
+                onChange={(e) => savePushTime(e.target.value)}
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 8, padding: '6px 8px' }}
+              />
+            </div>
+            {pushOn && (
+              <div className="btn-row">
+                <button className="btn small" onClick={testPush}>Прислать тестовый пуш</button>
+              </div>
+            )}
+          </>
+        )}
+        <p className="muted" style={{ fontSize: 13 }}>
+          Утром придёт сводка «план собран», вместе с ней — напоминание о завтрашних жёстких дедлайнах.
+        </p>
+      </div>
+
+      <h2>Уведомления в приложении</h2>
       <div className="card">
         {notifyState === 'unsupported' && <p className="muted">Браузер не поддерживает уведомления.</p>}
         {notifyState === 'granted' && <p className="muted">Включены: утреннее «план собран» и напоминание за день до жёсткого дедлайна.</p>}

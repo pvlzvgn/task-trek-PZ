@@ -8,6 +8,8 @@ import todayRoutes from './routes/today.js';
 import weekRoutes from './routes/week.js';
 import configRoutes from './routes/config.js';
 import gcalRoutes from './routes/gcal.js';
+import pushRoutes from './routes/push.js';
+import { startScheduler } from './services/push.js';
 
 const app = Fastify({ logger: { level: 'warn' } });
 
@@ -32,6 +34,9 @@ await app.register(todayRoutes);
 await app.register(weekRoutes);
 await app.register(configRoutes);
 await app.register(gcalRoutes);
+await app.register(pushRoutes);
+
+startScheduler(); // утренний пуш «план собран»
 
 const port = Number(process.env.API_PORT) || 3001;
 try {

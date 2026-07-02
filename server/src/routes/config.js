@@ -71,7 +71,7 @@ export default async function configRoutes(app) {
   });
 
   // ---- Настройки ----
-  const PUBLIC_SETTINGS = ['quiet_hours_from', 'quiet_hours_to', 'notify_morning', 'notify_deadline'];
+  const PUBLIC_SETTINGS = ['quiet_hours_from', 'quiet_hours_to', 'notify_morning', 'notify_deadline', 'push_morning_time'];
 
   app.get('/api/settings', async () => {
     const out = {};

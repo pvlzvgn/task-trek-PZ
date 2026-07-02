@@ -12,6 +12,7 @@
     "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
-    "googleapis": "^144.0.0"
+    "googleapis": "^144.0.0",
+    "web-push": "^3.6.7"
   }
 }

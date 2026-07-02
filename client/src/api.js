@@ -48,6 +48,11 @@ export const api = {
   gcalStatus: () => request('/api/gcal/status'),
   gcalAuthUrl: () => request('/api/gcal/auth-url'),
   gcalDisconnect: () => request('/api/gcal/disconnect', { method: 'POST' }),
+
+  pushPublicKey: () => request('/api/push/public-key'),
+  pushSubscribe: (subscription) => request('/api/push/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
+  pushUnsubscribe: (endpoint) => request('/api/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) }),
+  pushTest: () => request('/api/push/test', { method: 'POST' }),
 };
 
 export const DOMAIN_LABELS = {

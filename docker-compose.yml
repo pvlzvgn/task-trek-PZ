@@ -5,6 +5,8 @@ services:
       target: api
     restart: unless-stopped
     env_file: server/.env
+    environment:
+      TZ: ${TZ:-Europe/Moscow}
     volumes:
       - tracker-data:/app/server/data
 

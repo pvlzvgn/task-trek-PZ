@@ -58,6 +58,14 @@ const MIGRATIONS = [
     built_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   `,
+  // v2: подписки Web Push
+  `
+  CREATE TABLE push_subscriptions (
+    endpoint TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  `,
 ];
 
 function migrate() {
