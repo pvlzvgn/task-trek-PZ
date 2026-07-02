@@ -2,9 +2,9 @@
 
 encode gzip
 
-# API → Node-контейнер
+# API → Node (адрес переопределяется в docker-compose через API_UPSTREAM)
 handle /api/* {
-	reverse_proxy api:3001
+	reverse_proxy {$API_UPSTREAM:api:3001}
 }
 
 # SPA: всё остальное — статика, роуты отдают index.html

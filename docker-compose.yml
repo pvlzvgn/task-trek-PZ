@@ -9,6 +9,9 @@ services:
       TZ: ${TZ:-Europe/Moscow}
     volumes:
       - tracker-data:/app/server/data
+    # Сеть хоста: хостинг блокирует IPv4-диапазоны Telegram, а IPv6 у хоста работает.
+    # Docker-бридж не маскарадит v6 корректно, поэтому api живёт в сетевом стеке хоста.
+    network_mode: host
 
   web:
     build:
@@ -22,6 +25,9 @@ services:
       - "443:443"
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      API_UPSTREAM: host.docker.internal:3001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - caddy-data:/data
       - caddy-config:/config
