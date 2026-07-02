@@ -19,7 +19,7 @@ export default async function gcalRoutes(app) {
   app.get('/api/gcal/callback', async (req, reply) => {
     const { code, error } = req.query;
     if (error || !code) {
-      return reply.type('text/html').send('<h3>Авторизация отменена. Можно закрыть вкладку.</h3>');
+      return reply.type('text/html; charset=utf-8').send('<h3>Авторизация отменена. Можно закрыть вкладку.</h3>');
     }
     try {
       await handleCallback(code);
@@ -39,11 +39,11 @@ export default async function gcalRoutes(app) {
         }
       }
       return reply
-        .type('text/html')
+        .type('text/html; charset=utf-8')
         .send('<h3>Google Calendar подключён ✅</h3><p>Вернитесь в приложение — вкладку можно закрыть.</p>');
     } catch (err) {
       console.error('[gcal] callback:', err.message);
-      return reply.code(500).type('text/html').send('<h3>Не удалось подключить календарь.</h3>');
+      return reply.code(500).type('text/html; charset=utf-8').send('<h3>Не удалось подключить календарь.</h3>');
     }
   });
 
