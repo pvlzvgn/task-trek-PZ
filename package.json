@@ -5,7 +5,8 @@
   "description": "Трекер задач «Внешний мозг»",
   "workspaces": [
     "server",
-    "client"
+    "client",
+    "mcp"
   ],
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",

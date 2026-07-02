@@ -61,10 +61,32 @@ docker compose up -d --build
 
 Три контейнера-состояния: `api` (Fastify), `web` (Caddy: автоматический HTTPS, статика клиента, прокси `/api`). База — в Docker-томе `tracker-data`. На iPhone: открыть сайт в Safari → «Поделиться» → «На экран “Домой”» — приложение станет PWA с иконкой.
 
+## MCP-сервер (Claude как агент)
+
+Каталог `mcp/` — MCP-сервер поверх REST API: 13 инструментов (план дня, ввод и разметка задач, обзор недели, смена ротации). Настройка:
+
+```bash
+cp mcp/.env.example mcp/.env   # TASKTREK_API_URL и TASKTREK_API_TOKEN
+```
+
+- **Claude Code**: конфиг уже в репо (`.mcp.json`) — просто откройте проект.
+- **Claude Desktop**: добавьте в `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "tasktrek": { "command": "node", "args": ["/путь/к/репо/mcp/index.js"] }
+  }
+}
+```
+
+После этого Claude умеет: «разбери мой inbox», «что у меня на неделе?», «добавь задачу к дантисту 15 июля с жёстким дедлайном», «с понедельника новая ротация: пн-вт офис».
+
 ## Структура
 
 ```
 server/   Fastify + better-sqlite3 (вся бизнес-логика, включая сборку «Сегодня»)
 client/   React + Vite SPA, мобильная вёрстка, PWA
-deploy/   Caddyfile для продакшена
+mcp/      MCP-сервер для Claude (агентный доступ к API)
+deploy/   Caddyfile для продакшена, скрипты бэкапа
 ```

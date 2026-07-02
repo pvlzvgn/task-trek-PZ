@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tasktrek": {
+      "command": "node",
+      "args": ["mcp/index.js"]
+    }
+  }
+}
