@@ -10,6 +10,7 @@ import configRoutes from './routes/config.js';
 import gcalRoutes from './routes/gcal.js';
 import pushRoutes from './routes/push.js';
 import { startScheduler } from './services/push.js';
+import { startTelegramBot } from './services/telegram.js';
 
 const app = Fastify({ logger: { level: 'warn' } });
 
@@ -37,6 +38,7 @@ await app.register(gcalRoutes);
 await app.register(pushRoutes);
 
 startScheduler(); // утренний пуш «план собран»
+startTelegramBot(); // включается, если задан TELEGRAM_BOT_TOKEN
 
 const port = Number(process.env.API_PORT) || 3001;
 try {

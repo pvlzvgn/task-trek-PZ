@@ -2,6 +2,7 @@ import webpush from 'web-push';
 import { db, getSetting, setSetting } from '../db.js';
 import { buildPlan } from './today.js';
 import { todayStr, addDays } from '../lib/dates.js';
+import { sendMorningSummary } from './telegram.js';
 
 // Web Push: VAPID-ключи генерируются один раз и живут в settings — ноль ручной настройки.
 
@@ -95,6 +96,7 @@ async function morningTick() {
 
   const result = await sendToAll({ title: 'План собран ✅', body, url: '/' });
   console.log(`[push] утренняя сводка: ${result.sent}/${result.total}`);
+  await sendMorningSummary(body); // дублируем в Telegram, если бот привязан
 }
 
 export function startScheduler() {
