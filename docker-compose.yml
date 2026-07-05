@@ -26,13 +26,24 @@ services:
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
       API_UPSTREAM: host.docker.internal:3001
+      FOXGEAR_SITE_ADDRESS: ${FOXGEAR_SITE_ADDRESS:-foxgear.localhost}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - caddy-data:/data
       - caddy-config:/config
+    # Второй сайт Caddy — дашборд Foxgear из соседнего compose-проекта:
+    # подключаемся к его сети, чтобы резолвить сервис `dashboard` по DNS.
+    networks:
+      - default
+      - foxgear
 
 volumes:
   tracker-data:
   caddy-data:
   caddy-config:
+
+networks:
+  foxgear:
+    external: true
+    name: foxgear-platform_default

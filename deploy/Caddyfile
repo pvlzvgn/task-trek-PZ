@@ -1,15 +1,30 @@
-{$SITE_ADDRESS:localhost}
+{$SITE_ADDRESS:localhost} {
+	encode gzip
 
-encode gzip
+	# API → Node (адрес переопределяется в docker-compose через API_UPSTREAM)
+	handle /api/* {
+		reverse_proxy {$API_UPSTREAM:api:3001}
+	}
 
-# API → Node (адрес переопределяется в docker-compose через API_UPSTREAM)
-handle /api/* {
-	reverse_proxy {$API_UPSTREAM:api:3001}
+	# SPA: всё остальное — статика, роуты отдают index.html
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
 }
 
-# SPA: всё остальное — статика, роуты отдают index.html
-handle {
-	root * /srv
-	try_files {path} /index.html
-	file_server
+# Foxgear-дашборд (Streamlit) — соседний compose-проект на том же VPS.
+# Caddy подключён к его docker-сети (см. networks в docker-compose.yml),
+# поэтому upstream — имя сервиса `dashboard`. Доступ по паролю (basic auth):
+# Streamlit своей авторизации не имеет, а внутри — коммерческие данные Ozon.
+{$FOXGEAR_SITE_ADDRESS:foxgear.localhost} {
+	encode gzip
+
+	basic_auth {
+		pavel $2a$14$FV9W7r1GcK0pSCdkVRK4TubvTDArhHbJRvxBL1YuXapP3NwlEwURS
+	}
+
+	# WebSocket Streamlit'а Caddy проксирует автоматически
+	reverse_proxy {$FOXGEAR_UPSTREAM:dashboard:8501}
 }
