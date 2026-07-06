@@ -69,7 +69,8 @@ export async function sendToAll(payload) {
 // собрать план (он же закэшируется для приложения) и отправить сводку.
 
 async function morningTick() {
-  if (subscriptionCount() === 0) return;
+  // Не выходим при нуле push-подписок: сводка нужна и Telegram-боту,
+  // а план в любом случае полезно собрать заранее.
   const pushTime = getSetting('push_morning_time') || '08:00';
   const now = new Date();
   const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;

@@ -7,6 +7,10 @@ services:
     env_file: server/.env
     environment:
       TZ: ${TZ:-Europe/Moscow}
+      # IPv6-адрес хоста периодически становится deprecated (DHCPv6 не продлевает
+      # preferred lifetime), из-за чего система сортирует IPv4 выше, а IPv4 Telegram
+      # заблокирован хостингом. Форсируем IPv6-первым — путь в Telegram только такой.
+      NODE_OPTIONS: --dns-result-order=ipv6first
     volumes:
       - tracker-data:/app/server/data
     # Сеть хоста: хостинг блокирует IPv4-диапазоны Telegram, а IPv6 у хоста работает.
