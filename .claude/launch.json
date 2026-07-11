@@ -4,8 +4,20 @@
     {
       "name": "task-trek",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "foxgear-dash",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-pavel-Desktop-TASK-TREK/47002f10-dabe-43ad-9b09-e3ab292fe996/scratchpad/foxprev' && ../fxvenv/bin/streamlit run app.py --server.port 8601 --server.headless true --browser.gatherUsageStats false"
+      ],
+      "port": 8601
     }
   ]
 }

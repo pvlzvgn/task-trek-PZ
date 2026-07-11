@@ -42,10 +42,21 @@ services:
       - default
       - foxgear
 
+  # Расшифровка голосовых для Telegram-бота (Whisper на CPU).
+  # Порт открыт только на localhost хоста — api (network_mode: host) ходит на 127.0.0.1:8081.
+  stt:
+    build: deploy/stt
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - stt-models:/root/.cache
+
 volumes:
   tracker-data:
   caddy-data:
   caddy-config:
+  stt-models:
 
 networks:
   foxgear:

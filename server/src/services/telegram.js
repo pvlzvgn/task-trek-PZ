@@ -111,8 +111,48 @@ async function handleQuickAdd(chatId, text) {
   await send(chatId, `Записал: <b>${esc(task.title)}</b>\n<i>${bits.join(' · ')}</i>`);
 }
 
+// Голосовое сообщение → Whisper на VPS → задача в inbox
+async function handleVoice(chatId, voice) {
+  const sttUrl = process.env.STT_URL || 'http://127.0.0.1:8081';
+  if (voice.duration > 60) {
+    await send(chatId, 'Слишком длинное голосовое для задачи (>60 сек) — надиктуй короче.');
+    return;
+  }
+  await tg('sendChatAction', { chat_id: chatId, action: 'typing' });
+  try {
+    const file = await tg('getFile', { file_id: voice.file_id });
+    const audioRes = await fetch(`https://api.telegram.org/file/bot${token()}/${file.file_path}`);
+    if (!audioRes.ok) throw new Error(`скачивание файла: HTTP ${audioRes.status}`);
+    const audio = Buffer.from(await audioRes.arrayBuffer());
+
+    const sttRes = await fetch(`${sttUrl}/transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: audio,
+      signal: AbortSignal.timeout(90_000),
+    });
+    if (!sttRes.ok) throw new Error(`расшифровка: HTTP ${sttRes.status}`);
+    const { text } = await sttRes.json();
+
+    if (!text) {
+      await send(chatId, 'Не расслышал 🎙 Попробуй ещё раз или напиши текстом.');
+      return;
+    }
+    await handleQuickAdd(chatId, text);
+  } catch (err) {
+    console.error('[tg] голосовое:', err.message);
+    await send(chatId, 'Не смог расшифровать голосовое — напиши текстом.');
+  }
+}
+
 async function handleMessage(msg) {
   const chatId = String(msg.chat.id);
+
+  if (msg.voice && chatId === boundChatId()) {
+    await handleVoice(chatId, msg.voice);
+    return;
+  }
+
   const text = (msg.text || '').trim();
   if (!text) return;
 
