@@ -38,7 +38,8 @@ html, body {
 
 .screen {
   flex: 1;
-  padding: 16px 16px 150px; /* место под quick input + таббар */
+  /* сверху — отступ под статус-бар/Dynamic Island (PWA рисуется под ними), снизу — под quick input + таббар */
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 150px;
 }
 
 h1 { font-size: 22px; margin: 8px 0 2px; }
