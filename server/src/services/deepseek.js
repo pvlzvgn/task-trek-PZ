@@ -52,7 +52,7 @@ export async function parseTaskText(text) {
     return {
       title: parsed.title.trim(),
       deadline: /^\d{4}-\d{2}-\d{2}$/.test(parsed.deadline || '') ? parsed.deadline : null,
-      week_flag: !!parsed.week_flag,
+      week_flag: parsed.week_flag ? 1 : 0, // SQLite не принимает булевы
       day_context: ['office', 'remote', 'weekend'].includes(parsed.day_context) ? parsed.day_context : null,
       effort: ['quick', 'normal', 'deep'].includes(parsed.effort) ? parsed.effort : 'normal',
     };
