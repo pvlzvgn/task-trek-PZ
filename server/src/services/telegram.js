@@ -170,6 +170,7 @@ async function handleVoice(chatId, voice) {
         const bits = ['📥 в inbox'];
         if (task.deadline) bits.push(`дедлайн ${task.deadline}`);
         if (task.week_flag) bits.push('на этой неделе');
+        if (task.domain) bits.push(DOMAIN_LABELS[task.domain] || task.domain);
         if (task.day_context) bits.push(CONTEXT_LABELS_TG[task.day_context] || task.day_context);
         if (task.effort !== 'normal') bits.push(task.effort === 'quick' ? '⚡ быстрая' : '🧠 фокус');
         await send(chatId, `🎙 «${esc(text)}»\n\nЗаписал: <b>${esc(task.title)}</b>\n<i>${bits.join(' · ')}</i>`);
