@@ -3,6 +3,7 @@ import { buildPlan } from './today.js';
 import { todayStr } from '../lib/dates.js';
 import { parseQuickInput } from '../lib/quickparse.js';
 import { createTask, completeTask, getTask, listTasks } from './tasks.js';
+import { parseTaskText, isConfigured as deepseekConfigured } from './deepseek.js';
 
 // Telegram-бот: тонкий вход в трекер. Long polling — не нужен вебхук и публичный URL.
 // Привязка: бот отвечает только одному чату; привязывается отправкой API_TOKEN.
@@ -12,16 +13,38 @@ const DOMAIN_LABELS = {
   finance: 'Финансы', health: 'Здоровье', life: 'Быт',
 };
 
+const CONTEXT_LABELS_TG = { office: 'офисное', remote: 'на удалёнке', weekend: 'на выходных' };
+
 function token() {
   return process.env.TELEGRAM_BOT_TOKEN;
 }
 
+// Сеть до Telegram с этого хостинга эпизодически моргает (~4% запросов) —
+// все вызовы с ретраями, кроме длинного getUpdates (его перезапустит цикл поллинга).
+async function fetchRetry(url, options = {}, attempts = 3) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 async function tg(method, payload) {
-  const res = await fetch(`https://api.telegram.org/bot${token()}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  const attempts = method === 'getUpdates' ? 1 : 3;
+  const res = await fetchRetry(
+    `https://api.telegram.org/bot${token()}/${method}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    attempts
+  );
   const data = await res.json();
   if (!data.ok) throw new Error(`${method}: ${data.description}`);
   return data.result;
@@ -121,7 +144,7 @@ async function handleVoice(chatId, voice) {
   await tg('sendChatAction', { chat_id: chatId, action: 'typing' });
   try {
     const file = await tg('getFile', { file_id: voice.file_id });
-    const audioRes = await fetch(`https://api.telegram.org/file/bot${token()}/${file.file_path}`);
+    const audioRes = await fetchRetry(`https://api.telegram.org/file/bot${token()}/${file.file_path}`);
     if (!audioRes.ok) throw new Error(`скачивание файла: HTTP ${audioRes.status}`);
     const audio = Buffer.from(await audioRes.arrayBuffer());
 
@@ -137,6 +160,21 @@ async function handleVoice(chatId, voice) {
     if (!text) {
       await send(chatId, 'Не расслышал 🎙 Попробуй ещё раз или напиши текстом.');
       return;
+    }
+
+    // Живую речь превращаем в структуру через DeepSeek; без ключа/при ошибке — как есть
+    if (deepseekConfigured()) {
+      const parsed = await parseTaskText(text);
+      if (parsed) {
+        const task = createTask(parsed);
+        const bits = ['📥 в inbox'];
+        if (task.deadline) bits.push(`дедлайн ${task.deadline}`);
+        if (task.week_flag) bits.push('на этой неделе');
+        if (task.day_context) bits.push(CONTEXT_LABELS_TG[task.day_context] || task.day_context);
+        if (task.effort !== 'normal') bits.push(task.effort === 'quick' ? '⚡ быстрая' : '🧠 фокус');
+        await send(chatId, `🎙 «${esc(text)}»\n\nЗаписал: <b>${esc(task.title)}</b>\n<i>${bits.join(' · ')}</i>`);
+        return;
+      }
     }
     await handleQuickAdd(chatId, text);
   } catch (err) {
