@@ -14,6 +14,16 @@
 	}
 }
 
+# Дневник тренировок (gym-diary) — статическое PWA, всё хранит в IndexedDB.
+# Файлы лежат на хосте в /opt/gym-diary/dist (bind-mount в docker-compose),
+# поэтому деплой новой версии — просто rsync, без пересборки образа.
+{$GYM_SITE_ADDRESS:gym.localhost} {
+	encode gzip
+	root * /srv-gym
+	try_files {path} /index.html
+	file_server
+}
+
 # Foxgear-дашборд (Streamlit) — соседний compose-проект на том же VPS.
 # Caddy подключён к его docker-сети (см. networks в docker-compose.yml),
 # поэтому upstream — имя сервиса `dashboard`. Доступ по паролю (basic auth):

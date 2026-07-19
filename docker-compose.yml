@@ -31,11 +31,15 @@ services:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
       API_UPSTREAM: host.docker.internal:3001
       FOXGEAR_SITE_ADDRESS: ${FOXGEAR_SITE_ADDRESS:-foxgear.localhost}
+      # Дефолт — прод-домен: переменную в .env добавлять не нужно
+      GYM_SITE_ADDRESS: ${GYM_SITE_ADDRESS:-gym.85-239-41-8.sslip.io}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - caddy-data:/data
       - caddy-config:/config
+      # Дневник тренировок: статика лежит на хосте, обновляется rsync'ом
+      - /opt/gym-diary/dist:/srv-gym:ro
     # Второй сайт Caddy — дашборд Foxgear из соседнего compose-проекта:
     # подключаемся к его сети, чтобы резолвить сервис `dashboard` по DNS.
     networks:
